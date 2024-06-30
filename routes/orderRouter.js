@@ -3,6 +3,8 @@ const orderController = require("../controllers/orderController");
 
 const orderRouter = Router();
 
+orderRouter.get("/total-sales", orderController.getTotalSales);
+orderRouter.get("/status", orderController.getByStatus);
 orderRouter.get("/", orderController.getAll);
 orderRouter.get("/:id", orderController.getOne);
 orderRouter.post("/", orderController.create);

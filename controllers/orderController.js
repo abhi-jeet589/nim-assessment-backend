@@ -60,8 +60,58 @@ const getByCustomer = async (req, res) => {
 
 const getByStatus = async (req, res) => {
   try {
-    const orders = await Order.getByStatus(req.params.status);
+    const orders = await Order.getByStatus(req.query.s);
     res.send(orders);
+  } catch (error) {
+    res.status(500).send(error);
+  }
+};
+
+const agg = [
+  {
+    $unwind: {
+      path: "$items",
+      includeArrayIndex: "string",
+      preserveNullAndEmptyArrays: true
+    }
+  },
+  {
+    $lookup: {
+      from: "menuitems",
+      localField: "items.item",
+      foreignField: "_id",
+      as: "item"
+    }
+  },
+  {
+    $unwind: {
+      path: "$item",
+      includeArrayIndex: "string",
+      preserveNullAndEmptyArrays: true
+    }
+  },
+  {
+    $addFields: {
+      itemQuantity: "$items.quantity",
+      itemPrice: "$item.price"
+    }
+  },
+  {
+    $group: {
+      _id: null,
+      totalSales: {
+        $sum: {
+          $multiply: ["$itemPrice", "$itemQuantity"]
+        }
+      }
+    }
+  }
+];
+
+const getTotalSales = async (req, res) => {
+  try {
+    const totalSales = await Order.Order.aggregate(agg);
+    res.send({ total: totalSales[0].totalSales });
   } catch (error) {
     res.status(500).send(error);
   }
@@ -74,5 +124,6 @@ module.exports = {
   update,
   remove,
   getByCustomer,
-  getByStatus
+  getByStatus,
+  getTotalSales
 };
